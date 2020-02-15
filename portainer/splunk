@@ -1,0 +1,58 @@
+# Support for Docker Compose v3, https://docs.docker.com/compose/overview/
+version: '2'
+networks:
+  splunk:
+volumes:
+  opt-splunk-etc:
+    driver: local
+  opt-splunk-var:
+    driver: local
+  opt-splunkdeployment-etc:
+    driver: local
+  opt-splunkdeployment-var:
+    driver: local  
+
+services:
+  splunkenterprise:
+    hostname: splunkenterprise
+    image: splunk/splunk:latest
+    networks:
+      - splunk
+    environment:
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_ENABLE_LISTEN: 9997
+      SPLUNK_PASSWORD: <REDACTED>
+      SPLUNK_ADD: tcp 1514
+      SPLUNK_ADD_1: udp 1514
+      SPLUNK_DEPLOYMENT_SERVER: splunkdeployment:8089
+    volumes:
+      - opt-splunk-etc:/opt/splunk/etc
+      - opt-splunk-var:/opt/splunk/var
+    ports:
+      - "8000:8000"
+      - 9997:9997
+      - 514:1514/udp
+      - 514:1514
+    restart: always
+    labels:
+      # Explicitly tell Traefik to expose this container
+      - traefik.enable=true
+      - traefik.backend=splunkenterprise
+      - traefik.frontend.rule=Host:splunk.home.our-lan.com
+      - traefik.port=8000
+  splunkdeployment:
+    hostname: splunkdeployment
+    image: splunk/splunk:latest
+    networks:
+      - splunk
+    environment:
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_PASSWORD: <REDACTED>
+      SPLUNK_ROLE: splunk_deployment_server
+    volumes:
+      - opt-splunkdeployment-etc:/opt/splunk/etc
+      - opt-splunkdeployment-var:/opt/splunk/var
+    ports:
+      - "8089:8089"
+    restart: always
+
