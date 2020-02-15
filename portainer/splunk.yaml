@@ -38,7 +38,7 @@ services:
       # Explicitly tell Traefik to expose this container
       - traefik.enable=true
       - traefik.backend=splunkenterprise
-      - traefik.frontend.rule=Host:splunk.home.our-lan.com
+      - traefik.frontend.rule=Host:splunk.${domain}
       - traefik.port=8000
   splunkdeployment:
     hostname: splunkdeployment
