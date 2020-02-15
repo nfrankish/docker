@@ -1,0 +1,58 @@
+version: '2'
+
+networks:
+  traefik:
+    external:
+      name: traefik
+  guac:
+
+services:
+  db:
+    hostname: db
+    build:
+      context: .
+    restart: always
+    networks:
+      guac:
+    volumes:
+      - data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  guacd:
+    hostname: guacd
+    networks:
+       guac:
+    image: guacamole/guacd:1.1.0
+    restart: always
+
+  guacamole:
+    hostname: guacamole
+    image: guacamole/guacamole:1.1.0
+    restart: always
+    networks:
+      traefik:
+      guac:
+    ports:
+      - 192.168.22.12:8080:8080
+    links:
+      - guacd
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.guacamole.rule=Host(`guac.${FQDN}`)"
+      - "traefik.port=8080"
+      - "traefik.backend=guacamole"
+    environment:
+      GUACD_HOSTNAME: guacd
+      MYSQL_HOSTNAME: db
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+volumes:
+  data:
