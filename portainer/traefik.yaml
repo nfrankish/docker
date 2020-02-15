@@ -1,0 +1,22 @@
+version: '2'
+networks:
+  traefik:
+    external:
+      name: traefik
+services:
+  traefik:
+    networks:
+      traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.forwardedHeaders.trustedIPs=192.168.22.1"
+    ports:
+      - "192.168.22.12:80:80"
+      - "192.168.22.12:81:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
